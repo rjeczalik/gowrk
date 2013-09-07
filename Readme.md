@@ -16,10 +16,12 @@ workspace.
 
   * Add projects you're going to work on
 
-  `cd mywrk; mkdir -p src/bitbucket.org/you`
-  `git submodule init git@bitbucket.org:you/project1.git src/bitbucket.org/you/project1`
-  `git submodule init git@bitbucket.org:you/project1.git src/bitbucket.org/you/project1`
-  `git commit -a -m "created new worksapce"`
+```
+cd mywrk; mkdir -p src/bitbucket.org/you
+git submodule init git@bitbucket.org:you/project1.git src/bitbucket.org/you/project1
+git submodule init git@bitbucket.org:you/project1.git src/bitbucket.org/you/project1
+git commit -a -m "created new worksapce"
+```
 
 # Usage
 
