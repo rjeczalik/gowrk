@@ -16,7 +16,7 @@ workspace.
 
   * Add projects you're going to work on
 
-```
+```bash
 cd mywrk; mkdir -p src/bitbucket.org/you
 git submodule init git@bitbucket.org:you/project1.git src/bitbucket.org/you/project1
 git submodule init git@bitbucket.org:you/project1.git src/bitbucket.org/you/project1
@@ -50,11 +50,13 @@ usage: gowrk up     | commit submodules HEADs
   * Update mywrk submodule refs after any commits/pushes you done
     in your projects:
 
-  `cd mywrk/src/github.com/you/project1;`
-  `git commit Readme.md -m"initial commit"`
-  `git push origin master`
-  `cd ${GOPATH}`
-  `gowrk up; git push`
+```bash
+cd mywrk/src/github.com/you/project1;
+git commit Readme.md -m"initial commit"
+git push origin master
+cd ${GOPATH}
+gowrk up; git push
+```
 
 # License
 
