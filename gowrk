@@ -1,0 +1,110 @@
+#!/usr/bin/env bash
+#
+# Copyright (C) 2013 Rafal Jeczalik <rjeczalik@gmail.com>
+# Distributed under the MIT license, see License.md for details.
+#
+# $origin: bitbucket.org/rjeczalik/gowrk
+#
+
+GOPATH=`dirname $(readlink -f "${BASH_SOURCE[0]}")`
+GOBIN=${GOPATH}/bin
+
+usage() {
+  echo "usage: gowrk up     | commit submodules HEADs"
+  echo "       -------------+------------------------"
+  echo "       gowrk lint   | check code style"
+  echo "       gowrk [test] | default action"
+  echo "       -------------+------------------------"
+  echo "       gowrk help   | print this help message"
+  echo
+}
+
+die() {
+  [ -z "${*}" ] || echo "gowrk: ${*}"
+  exit 1
+}
+
+die_usage() {
+  [ -z "${*}" ] || ( echo "gowrk: ${*}"; echo )
+  usage 
+  exit 1 
+}
+
+do_up() {
+  local updated_submodules=(`cd "${GOPATH}"; git status -uno | perl -ne '/#\s+modified:\s+src\/(.*)\s\(new commits\)/&&print "$1\n"'`)
+
+  if [ ${#updated_submodules} -gt 0 ]; then
+    local commit_message=`cd "${GOPATH}"; echo "submodules' HEAD refs update:"; echo;
+                          for sub in ${updated_submodules[@]}; do
+                            git add "src/\${sub}"
+                            echo "  * \${sub}@$(cd "src/\${sub}"; git rev-parse --short HEAD)";
+                          done`
+
+    git commit -m"${commit_message}"
+  else
+    die "no changes in refs"
+  fi
+}
+
+do_lint() {
+  if type -f golint &>/dev/null; then
+    git submodule foreach golint .
+  else
+    go get github.com/golang/lint
+    go install github.com/golang/lint/golint
+    git submodule foreach "${GOBIN}"/golint .
+  fi
+}
+
+do_test() {
+  git submodule foreach gofmt -w=true -s=true . | grep -Ev ^Entering
+  git submodule foreach \
+    find . -type f -name \'*.go\' -exec readlink -f {} \\\;  | 
+      grep -Ev ^Entering | xargs dirname |
+                            sort | uniq  |
+                            sed s:${GOPATH}/src/:: |
+                            tr '\n' ' '  |
+                            xargs echo   | while read packages; do
+                                             go vet ${packages}
+                                             go test -race ${packages}
+                                           done
+}
+
+do_source() {
+  export GOPATH GOBIN
+  for f in ${GOPATH}/.gowrkrc ${GOPATH}/.gowrkrc.d/*; do
+    [ -f "${f}" ] && source "${f}"
+  done
+}
+
+main() {
+  if [ ! ${#} -gt 1 ]; then
+    case "${1}" in
+      "up" )
+        do_up
+        ;;
+      "lint" )
+        do_lint
+        ;;
+      "" | "test" )
+        do_test
+        ;;
+      "help" )
+        usage
+        ;;
+      * )
+        die_usage "unknown flag: ${*}"
+        ;;
+    esac
+  else 
+    die_usage "unknown flags: ${*}"
+  fi
+}
+
+if [ "${BASH_SOURCE[0]}" != "${0}" ]; then
+  do_source
+elif [ "${PWD}" != "${GOPATH}" ]; then
+  die "gowrk must be run from ${GOPATH}"
+else
+  main ${*}
+fi
