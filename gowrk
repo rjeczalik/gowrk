@@ -6,12 +6,12 @@
 # $origin: bitbucket.org/rjeczalik/gowrk
 #
 
-( readlink -f . 2>/dev/null && readlnk=readlink ) || readlnk=greadlink
+( readlink -f . 2>/dev/null && _readlnk=readlink ) || _readlnk=greadlink
 
-GOPATH=`dirname $(${readlnk} -f "${BASH_SOURCE[0]}")`
+GOPATH=`dirname $(${_readlnk} -f "${BASH_SOURCE[0]}")`
 GOBIN=${GOPATH}/bin
 
-usage() {
+_usage() {
   echo "usage: gowrk up     | commit submodules HEADs"
   echo "       -------------+------------------------"
   echo "       gowrk lint   | check code style"
@@ -21,31 +21,31 @@ usage() {
   echo
 }
 
-die() {
+_die() {
   [ -z "${*}" ] || echo "gowrk: ${*}"
   exit 1
 }
 
-die_usage() {
+_die_usage() {
   [ -z "${*}" ] || ( echo "gowrk: ${*}"; echo )
-  usage 
+  _usage 
   exit 1 
 }
 
-do_projects_exist() {
+_do_projects_exist() {
   if [ `git submodule | perl -ne '/\s[\w\d]+\ssrc\/(.*)\s\(.*/&&print"$1\n"' | wc -l` -gt 0 ]; then
     return 0
   fi
   return 1
 }
 
-die_no_projects() {
-  if ! do_projects_exist; then
-    die "no projects found in your submodules"
+_die_no_projects() {
+  if ! _do_projects_exist; then
+    _die "no projects found in your submodules"
   fi
 }
 
-do_up() {
+_do_up() {
   local updated_submodules=(`cd "${GOPATH}"; git status -uno | perl -ne '/#\s+modified:\s+src\/(.*)\s\(new commits\)/&&print "$1\n"'`)
 
   if [ ${#updated_submodules} -gt 0 ]; then
@@ -57,11 +57,11 @@ do_up() {
 
     git commit -m"${commit_message}"
   else
-    die "no changes in refs"
+    _die "no changes in refs"
   fi
 }
 
-do_lint() {
+_do_lint() {
   if type -f golint &>/dev/null; then
     git submodule foreach golint .
   else
@@ -71,8 +71,8 @@ do_lint() {
   fi
 }
 
-do_test() {
-  dirnames() {
+_do_test() {
+  _dirnames() {
     while read file; do
       dirname ${file}
     done
@@ -80,8 +80,8 @@ do_test() {
 
   git submodule foreach gofmt -w=true -s=true . | grep -Ev ^Entering
   git submodule foreach \
-    find . -type f -name \'*.go\' -exec ${readlnk} -esf {} \\\; |
-              grep -Ev ^Entering | dirnames     |
+    find . -type f -name \'*.go\' -exec ${_readlnk} -esf {} \\\; |
+              grep -Ev ^Entering | _dirnames    |
                             sort | uniq         |
           sed s:${GOPATH}/src/:: | tr '\n' ' '  |
                     xargs echo   | while read packages; do
@@ -90,50 +90,50 @@ do_test() {
                                    done
 }
 
-do_source() {
+_do_source() {
   export GOPATH GOBIN
   for f in ${GOPATH}/.gowrkrc ${GOPATH}/.gowrkrc.d/*; do
     [ -f "${f}" ] && source "${f}"
   done
 }
 
-main() {
+_main() {
   if [ ! ${#} -gt 1 ]; then
     case "${1}" in
       "up" )
-        do_up
+        _do_up
         ;;
       "lint" )
-        die_no_projects
-        do_lint
+        _die_no_projects
+        _do_lint
         ;;
       "test" )
-        die_no_projects
-        do_test
+        _die_no_projects
+        _do_test
         ;;
       "help" )
-        usage
+        _usage
         ;;
       "" )
-        if ! do_projects_exist; then
-          usage
+        if ! _do_projects_exist; then
+          _usage
           return
         fi
-        do_test
+        _do_test
         ;;
       * )
-        die_usage "unknown flag: ${*}"
+        _die_usage "unknown flag: ${*}"
         ;;
     esac
   else 
-    die_usage "unknown flags: ${*}"
+    _die_usage "unknown flags: ${*}"
   fi
 }
 
 if [ "${BASH_SOURCE[0]}" != "${0}" ]; then
-  do_source
+  _do_source
 elif [ "`pwd -P`" != "${GOPATH}" ]; then
-  die "gowrk must be run from ${GOPATH}"
+  _die "gowrk must be run from ${GOPATH}"
 else
-  main ${*}
+  _main ${*}
 fi
