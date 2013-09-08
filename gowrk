@@ -6,7 +6,12 @@
 # $origin: bitbucket.org/rjeczalik/gowrk
 #
 
-GOPATH=`dirname $(readlink -f "${BASH_SOURCE[0]}")`
+if readlink -f . 2>/dev/null; then
+  GOPATH=`dirname $(readlink -f "${BASH_SOURCE[0]}")`
+else
+  GOPATH=`dirname $(greadlink -f "${BASH_SOURCE[0]}")`
+fi
+
 GOBIN=${GOPATH}/bin
 
 usage() {

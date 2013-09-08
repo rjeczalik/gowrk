@@ -19,7 +19,7 @@ workspace.
 ```bash
 cd mywrk; mkdir -p src/bitbucket.org/you
 git submodule init git@bitbucket.org:you/project1.git src/bitbucket.org/you/project1
-git submodule init git@bitbucket.org:you/project1.git src/bitbucket.org/you/project1
+git submodule init git@bitbucket.org:you/project1.git src/bitbucket.org/you/project2
 git commit -a -m "created new worksapce"
 ```
 
@@ -56,6 +56,14 @@ git commit Readme.md -m"initial commit"
 git push origin master
 cd ${GOPATH}
 gowrk up; git push
+```
+
+# MacOSX note
+
+  gowrk uses GNU Readlink, you may want to install it first
+
+```
+brew install coreutils
 ```
 
 # License
