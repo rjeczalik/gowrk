@@ -7,11 +7,12 @@
 #
 
 if readlink -f . 2>/dev/null; then
-  GOPATH=`dirname $(readlink -f "${BASH_SOURCE[0]}")`
+  alias readlnk=readlink
 else
-  GOPATH=`dirname $(greadlink -f "${BASH_SOURCE[0]}")`
+  alias readlnk=greadlink
 fi
 
+GOPATH=`dirname $(readlnk -f "${BASH_SOURCE[0]}")`
 GOBIN=${GOPATH}/bin
 
 usage() {
@@ -77,7 +78,7 @@ do_lint() {
 do_test() {
   git submodule foreach gofmt -w=true -s=true . | grep -Ev ^Entering
   git submodule foreach \
-    find . -type f -name \'*.go\' -exec readlink -f {} \\\;  | 
+    find . -type f -name \'*.go\' -exec readlnk -f {} \\\;  | 
       grep -Ev ^Entering | xargs dirname |
                             sort | uniq  |
                             sed s:${GOPATH}/src/:: |
