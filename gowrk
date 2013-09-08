@@ -28,8 +28,8 @@ _die() {
 
 _die_usage() {
   [ -z "${*}" ] || ( echo "gowrk: ${*}"; echo )
-  _usage 
-  exit 1 
+  _usage
+  exit 1
 }
 
 _do_projects_exist() {
@@ -86,6 +86,7 @@ _do_test() {
           sed s:${GOPATH}/src/:: | tr '\n' ' '  |
                     xargs echo   | while read packages; do
                                      go vet ${packages}
+                                     go test -race -i ${packages}
                                      go test -race ${packages}
                                    done
 }
@@ -125,7 +126,7 @@ _main() {
         _die_usage "unknown flag: ${*}"
         ;;
     esac
-  else 
+  else
     _die_usage "unknown flags: ${*}"
   fi
 }
