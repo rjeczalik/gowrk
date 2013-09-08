@@ -6,13 +6,9 @@
 # $origin: bitbucket.org/rjeczalik/gowrk
 #
 
-if readlink -f . 2>/dev/null; then
-  alias readlnk=readlink
-else
-  alias readlnk=greadlink
-fi
+( readlink -f . 2>/dev/null && readlnk=readlink ) || readlnk=greadlink
 
-GOPATH=`dirname $(readlnk -f "${BASH_SOURCE[0]}")`
+GOPATH=`dirname $(${readlnk} -f "${BASH_SOURCE[0]}")`
 GOBIN=${GOPATH}/bin
 
 usage() {
@@ -76,17 +72,22 @@ do_lint() {
 }
 
 do_test() {
+  dirnames() {
+    while read file; do
+      dirname ${file}
+    done
+  }
+
   git submodule foreach gofmt -w=true -s=true . | grep -Ev ^Entering
   git submodule foreach \
-    find . -type f -name \'*.go\' -exec readlnk -f {} \\\;  | 
-      grep -Ev ^Entering | xargs dirname |
-                            sort | uniq  |
-                            sed s:${GOPATH}/src/:: |
-                            tr '\n' ' '  |
-                            xargs echo   | while read packages; do
-                                             go vet ${packages}
-                                             go test -race ${packages}
-                                           done
+    find . -type f -name \'*.go\' -exec ${readlnk} -esf {} \\\; |
+              grep -Ev ^Entering | dirnames     |
+                            sort | uniq         |
+          sed s:${GOPATH}/src/:: | tr '\n' ' '  |
+                    xargs echo   | while read packages; do
+                                     go vet ${packages}
+                                     go test -race ${packages}
+                                   done
 }
 
 do_source() {
@@ -131,7 +132,7 @@ main() {
 
 if [ "${BASH_SOURCE[0]}" != "${0}" ]; then
   do_source
-elif [ "${PWD}" != "${GOPATH}" ]; then
+elif [ "`pwd -P`" != "${GOPATH}" ]; then
   die "gowrk must be run from ${GOPATH}"
 else
   main ${*}
