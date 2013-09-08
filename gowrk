@@ -6,7 +6,7 @@
 # $origin: bitbucket.org/rjeczalik/gowrk
 #
 
-( readlink -f . 2>/dev/null && _readlnk=readlink ) || _readlnk=greadlink
+readlink -f . >/dev/null 2>&1 && _readlnk=readlink || _readlnk=greadlink
 
 GOPATH=`dirname $(${_readlnk} -f "${BASH_SOURCE[0]}")`
 GOBIN=${GOPATH}/bin
