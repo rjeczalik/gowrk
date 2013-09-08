@@ -92,7 +92,8 @@ _do_test() {
 }
 
 _do_source() {
-  export GOPATH GOBIN
+  PATH=${GOBIN}:${PATH}
+  export GOPATH GOBIN PATH
   for f in ${GOPATH}/.gowrkrc ${GOPATH}/.gowrkrc.d/*; do
     [ -f "${f}" ] && source "${f}"
   done
