@@ -4,7 +4,7 @@ gowrk
 Helper script for working on multiple open-source Go packages in a single
 workspace.
 
-# Starting new workspace
+### Starting new workspace
 
   * Fork and clone gowrk
 
@@ -18,12 +18,12 @@ workspace.
 
 ```bash
 cd mywrk; mkdir -p src/bitbucket.org/you
-git submodule init git@bitbucket.org:you/project1.git src/bitbucket.org/you/project1
-git submodule init git@bitbucket.org:you/project1.git src/bitbucket.org/you/project2
+git submodule add git@bitbucket.org:you/project1.git src/bitbucket.org/you/project1
+git submodule add git@bitbucket.org:you/project2.git src/bitbucket.org/you/project2
 git commit -a -m "created new worksapce"
 ```
 
-# Usage
+### Usage
 
 ```
 usage: gowrk up     | commit submodules HEADs
@@ -58,7 +58,7 @@ cd ${GOPATH}
 gowrk up; git push
 ```
 
-# MacOSX note
+### MacOSX note
 
   gowrk uses GNU Readlink, you may want to install it first
 
@@ -66,7 +66,7 @@ gowrk up; git push
 brew install coreutils
 ```
 
-# License
+### License
 
 Distributed under the MIT license, see License.md for details.
 

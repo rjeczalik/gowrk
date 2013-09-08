@@ -35,6 +35,19 @@ die_usage() {
   exit 1 
 }
 
+do_projects_exist() {
+  if [ `git submodule | perl -ne '/\s[\w\d]+\ssrc\/(.*)\s\(.*/&&print"$1\n"' | wc -l` -gt 0 ]; then
+    return 0
+  fi
+  return 1
+}
+
+die_no_projects() {
+  if ! do_projects_exist; then
+    die "no projects found in your submodules"
+  fi
+}
+
 do_up() {
   local updated_submodules=(`cd "${GOPATH}"; git status -uno | perl -ne '/#\s+modified:\s+src\/(.*)\s\(new commits\)/&&print "$1\n"'`)
 
@@ -89,13 +102,22 @@ main() {
         do_up
         ;;
       "lint" )
+        die_no_projects
         do_lint
         ;;
-      "" | "test" )
+      "test" )
+        die_no_projects
         do_test
         ;;
       "help" )
         usage
+        ;;
+      "" )
+        if ! do_projects_exist; then
+          usage
+          return
+        fi
+        do_test
         ;;
       * )
         die_usage "unknown flag: ${*}"
