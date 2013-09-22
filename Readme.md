@@ -26,12 +26,19 @@ git commit -a -m "created new worksapce"
 ### Usage
 
 ```
-usage: gowrk up     | commit submodules HEADs
-       -------------+------------------------
-       gowrk lint   | check code style
-       gowrk [test] | default action
-       -------------+------------------------
-       gowrk help   | print this help message
+usage: gowrk up        | commit submodules HEADs
+       ----------------+------------------------------
+       gowrk lint      | check code style
+       gowrk           | runs go test -race over any
+                       | package added as a submodule
+                       | under ./src directory
+       gowrk verbose   | same as above plus does not
+                       | suppress stdout nor stderr
+       gowrk 'reg.*ex' | tests packages that match
+                       | pattern; can be combined with
+                       | verbose
+       ----------------+------------------------------
+       gowrk help      | print this help message
 ```
 
   * Customize your workspace with source scripts
