@@ -12,12 +12,16 @@ GOPATH=`dirname $(${_readlnk} -f "${BASH_SOURCE[0]}")`
 GOBIN=${GOPATH}/bin
 
 _usage() {
-  echo "usage: gowrk up     | commit submodules HEADs"
-  echo "       -------------+------------------------"
-  echo "       gowrk lint   | check code style"
-  echo "       gowrk [test] | default action"
-  echo "       -------------+------------------------"
-  echo "       gowrk help   | print this help message"
+  echo "usage: gowrk up        | commit submodules HEADs"
+  echo "       ----------------+-----------------------------"
+  echo "       gowrk lint      | check code style"
+  echo "       gowrk           | run test -race over any"
+  echo "                       | package added as a submodule"
+  echo "                       | under ./src directory"
+  echo "       gowrk verbose   | same as above plus does not"
+  echo "                       | suppress stdout nor stderr"  
+  echo "       ----------------+-----------------------------"
+  echo "       gowrk help      | print this help message"
   echo
 }
 
@@ -72,6 +76,7 @@ _do_lint() {
 }
 
 _do_test() {
+  local verbose=${1}
   _dirnames() {
     while read file; do
       dirname ${file}
@@ -84,10 +89,16 @@ _do_test() {
               grep -Ev ^Entering | _dirnames    |
                             sort | uniq         |
           sed s:${GOPATH}/src/:: | tr '\n' ' '  |
-                    xargs echo   | while read packages; do
+                      xargs echo | while read packages; do
                                      go vet ${packages}
-                                     go test -race -i ${packages}
-                                     go test -race ${packages}
+                                     if [ ! -z "${verbose}" ]; then
+                                       for pkg in ${packages}; do
+                                         ( cd ${GOPATH}/src/${pkg}; go test -race )
+                                       done
+                                     else
+                                       go test -race -i ${packages}
+                                       go test -race ${packages}
+                                     fi
                                    done
 }
 
@@ -109,19 +120,12 @@ _main() {
         _die_no_projects
         _do_lint
         ;;
-      "test" )
-        _die_no_projects
-        _do_test
-        ;;
       "help" )
         _usage
         ;;
-      "" )
-        if ! _do_projects_exist; then
-          _usage
-          return
-        fi
-        _do_test
+      "" | "verbose")
+        _die_no_projects
+        _do_test "`[ "${1}" == "verbose" ] && echo 1`"
         ;;
       * )
         _die_usage "unknown flag: ${*}"
