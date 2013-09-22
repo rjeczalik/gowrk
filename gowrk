@@ -13,14 +13,17 @@ GOBIN=${GOPATH}/bin
 
 _usage() {
   echo "usage: gowrk up        | commit submodules HEADs"
-  echo "       ----------------+-----------------------------"
+  echo "       ----------------+------------------------------"
   echo "       gowrk lint      | check code style"
-  echo "       gowrk           | run test -race over any"
+  echo "       gowrk           | runs go test -race over any"
   echo "                       | package added as a submodule"
   echo "                       | under ./src directory"
   echo "       gowrk verbose   | same as above plus does not"
-  echo "                       | suppress stdout nor stderr"  
-  echo "       ----------------+-----------------------------"
+  echo "                       | suppress stdout nor stderr"
+  echo "       gowrk 'reg.*ex' | tests packages that match"
+  echo "                       | pattern; can be combined with"
+  echo "                       | verbose"  
+  echo "       ----------------+------------------------------"
   echo "       gowrk help      | print this help message"
   echo
 }
@@ -77,29 +80,45 @@ _do_lint() {
 
 _do_test() {
   local verbose=${1}
+  local regex=${2}
   _dirnames() {
     while read file; do
       dirname ${file}
     done
   }
+  if [ ! -z "${regex}" ]; then
+    _filter() {
+      while read pkg; do
+        [[ ${pkg} =~ ${regex} ]] && echo ${pkg}
+      done
+    }
+  else
+    _filter() {
+      while read pkg; do
+        echo ${pkg}
+      done
+    }
+  fi
 
   git submodule foreach gofmt -w=true -s=true . | grep -Ev ^Entering
   git submodule foreach \
     find . -type f -name \'*.go\' -exec ${_readlnk} -esf {} \\\; |
               grep -Ev ^Entering | _dirnames    |
                             sort | uniq         |
-          sed s:${GOPATH}/src/:: | tr '\n' ' '  |
-                      xargs echo | while read packages; do
-                                     go vet ${packages}
-                                     if [ ! -z "${verbose}" ]; then
-                                       for pkg in ${packages}; do
-                                         ( cd ${GOPATH}/src/${pkg}; go test -race )
-                                       done
-                                     else
-                                       go test -race -i ${packages}
-                                       go test -race ${packages}
-                                     fi
-                                   done
+          sed s:${GOPATH}/src/:: | _filter      |
+                    tr '\n' ' '  | xargs echo   | while read packages; do
+                                                    if [ ! -z "${packages}" ]; then
+                                                      go vet ${packages}
+                                                      if [ ! -z "${verbose}" ]; then
+                                                        for pkg in ${packages}; do
+                                                          ( cd ${GOPATH}/src/${pkg}; go test -race )
+                                                        done
+                                                      else
+                                                        go test -race -i ${packages}
+                                                        go test -race ${packages}
+                                                      fi
+                                                    fi
+                                                  done
 }
 
 _do_source() {
@@ -111,7 +130,15 @@ _do_source() {
 }
 
 _main() {
-  if [ ! ${#} -gt 1 ]; then
+  local verbose=
+  local regex=${1}
+  if [ "${1}" == "verbose" ]; then 
+    verbose=1
+    regex=${2}
+  elif [ "${2}" == "verbose" ]; then
+    verbose=1
+  fi
+  if [ ! ${#} -gt 1 ] || ( [ ${#} -eq 2 ] && [ ! -z "${verbose}" ] ); then
     case "${1}" in
       "up" )
         _do_up
@@ -123,12 +150,9 @@ _main() {
       "help" )
         _usage
         ;;
-      "" | "verbose")
+      "" | "verbose" | *)
         _die_no_projects
-        _do_test "`[ "${1}" == "verbose" ] && echo 1`"
-        ;;
-      * )
-        _die_usage "unknown flag: ${*}"
+        _do_test "`[ ! -z "${verbose}" ] && echo 1`" "${regex}"
         ;;
     esac
   else
