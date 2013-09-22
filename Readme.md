@@ -52,7 +52,7 @@ usage: gowrk up        | commit submodules HEADs
 
   * Run tests for your projects
 
-  `cd mywrk; gowrk test`
+  `cd mywrk; gowrk`
 
   * Update mywrk submodule refs after any commits/pushes you done
     in your projects:
